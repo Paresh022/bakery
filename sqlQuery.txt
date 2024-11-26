@@ -1,0 +1,161 @@
+-- Create the users table
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    role ENUM('customer', 'admin') DEFAULT 'customer',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create the products table
+CREATE TABLE products (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    price DECIMAL(10, 2) NOT NULL,
+    stock INT DEFAULT 0,
+    image_url VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Create the order_items table
+CREATE TABLE order_items (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    product_id INT NOT NULL,
+    quantity INT NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (order_id) REFERENCES orders(id),
+    FOREIGN KEY (product_id) REFERENCES products(id)
+);
+
+-- Create the categories table (for organizing products)
+CREATE TABLE categories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Modify the products table to include a category_id
+CREATE TABLE products (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    price DECIMAL(10, 2) NOT NULL,
+    stock INT DEFAULT 0,
+    image_url VARCHAR(255),
+    category_id INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (category_id) REFERENCES categories(id)
+);
+
+-- Create a promotions table (for discounts or deals)
+CREATE TABLE promotions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    product_id INT NOT NULL,
+    discount_percentage DECIMAL(5, 2) CHECK (discount_percentage BETWEEN 0 AND 100),
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_id) REFERENCES products(id)
+);
+
+-- Create a reviews table (for user feedback on products)
+CREATE TABLE reviews (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    product_id INT NOT NULL,
+    user_id INT NOT NULL,
+    rating INT CHECK (rating BETWEEN 1 AND 5),
+    comment TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_id) REFERENCES products(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Create an audit_logs table (for tracking system activities)
+CREATE TABLE audit_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    action VARCHAR(255) NOT NULL,
+    table_name VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Create a payment_methods table (to store payment options)
+CREATE TABLE payment_methods (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Modify the orders table to include a payment_method_id
+CREATE TABLE orders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    total_price DECIMAL(10, 2) NOT NULL,
+    order_status ENUM('pending', 'processing', 'completed', 'cancelled') DEFAULT 'pending',
+    payment_method_id INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (payment_method_id) REFERENCES payment_methods(id)
+);
+
+
+
+----------------------------------------------------------------------------------------------------------------------------
+
+-- Insert data into users table
+INSERT INTO users (name, email, password, role) VALUES
+('Alice Baker', 'alice@example.com', 'hashed_password1', 'customer'),
+('Bob Admin', 'admin@example.com', 'hashed_password2', 'admin');
+
+-- Insert data into categories table
+INSERT INTO categories (name) VALUES
+('Cakes'),
+('Pastries'),
+('Bread'),
+('Cookies');
+
+-- Insert data into products table
+INSERT INTO products (name, description, price, stock, image_url) VALUES
+('Chocolate Cake', 'Rich and moist chocolate cake', 20.00, 10, 'choco_cake.jpg'),
+('Croissant', 'Flaky and buttery croissant', 3.50, 50, 'croissant.jpg'),
+('Sourdough Bread', 'Freshly baked sourdough', 5.00, 30, 'sourdough.jpg'),
+('Chocolate Chip Cookie', 'Chewy cookie with chocolate chips', 2.00, 100, 'cookie.jpg');
+
+-- Insert data into promotions table
+INSERT INTO promotions (product_id, discount_percentage, start_date, end_date) VALUES
+(1, 10.00, '2024-12-01', '2024-12-10'),
+(4, 15.00, '2024-12-01', '2024-12-15');
+
+-- Insert data into reviews table
+INSERT INTO reviews (product_id, user_id, rating, comment) VALUES
+(1, 1, 5, 'Best chocolate cake I have ever had!'),
+(2, 1, 4, 'Very fresh, but a bit small.');
+
+-- Insert data into audit_logs table
+INSERT INTO audit_logs (user_id, action, table_name) VALUES
+(2, 'Added new product: Chocolate Cake', 'products'),
+(2, 'Updated stock for Sourdough Bread', 'products');
+
+-- Insert data into payment_methods table
+INSERT INTO payment_methods (name) VALUES
+('Credit Card'),
+('Cash'),
+('Online Wallet');
+
+-- Insert data into orders table
+INSERT INTO orders (user_id, total_price, order_status, payment_method_id) VALUES
+(1, 25.00, 'completed', 1),
+(1, 10.50, 'pending', 2);
+
+-- Insert data into order_items table
+INSERT INTO order_items (order_id, product_id, quantity, price) VALUES
+(1, 1, 1, 20.00),
+(1, 4, 2, 5.00),
+(2, 3, 2, 5.25);
+
